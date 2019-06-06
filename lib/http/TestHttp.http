@@ -1,0 +1,7 @@
+
+  
+
+POST https://api.fami.link/item/me-item-api/view
+Content-Type: application/x-www-form-urlencoded
+
+token=585f98ff1941f26e1db948e6d60ca8414641e217&item_id=1592
