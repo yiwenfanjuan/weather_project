@@ -17,7 +17,7 @@ class HttpClient {
   //初始化dio并且进行相关配置
   static void _initDio() {
     BaseOptions options = BaseOptions();
-    //使用post方式请求数据
+    //使用get方式请求数据
     options.method = "GET";
     //请求基地址
     options.baseUrl = "https://api.seniverse.com/v3/";

@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:weather_project/data/BaseData.dart';
 import 'package:weather_project/data/air/AirInfo.dart';
 import 'package:weather_project/data/location/LocationEntity.dart';
 part 'AirResultInfo.g.dart';
@@ -21,10 +22,15 @@ class AirResultEntity{
 
 
 @JsonSerializable()
-class AirResultListEntity{
+class AirResultListEntity extends BaseData{
   List<AirResultEntity> results;
 
   AirResultListEntity(this.results);
 
   factory AirResultListEntity.fromJson(Map<String,dynamic> json) => _$AirResultListEntityFromJson(json);
+
+  @override
+  String toString() {
+    return "空气质量信息：$success,$message,$results";
+  }
 }

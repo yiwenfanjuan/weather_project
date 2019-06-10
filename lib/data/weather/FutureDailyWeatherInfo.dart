@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:weather_project/data/BaseData.dart';
 import 'package:weather_project/data/location/LocationEntity.dart';
 part 'FutureDailyWeatherInfo.g.dart';
 /**
@@ -53,7 +54,7 @@ class FutureDaysWeatherEntity{
 
 //总数据
 @JsonSerializable()
-class FutureDaysWeatherResultsEntity{
+class FutureDaysWeatherResultsEntity extends BaseData{
 
   List<FutureDaysWeatherEntity> results;
 

@@ -75,7 +75,7 @@ class _WeatherInfoWidgetState extends State<WeatherInfoWidget> with AutomaticKee
             ConstrainedBox(
               constraints: BoxConstraints.expand(height: 300.0),
               child: DecoratedBox(
-                child: _weatherEntity == null
+                child: (_weatherEntity == null || _airResultEntity == null)
                     ? null
                     : _WeatherDetailsWidget(_weatherEntity,
                         airEntity: _airResultEntity.air.city),
@@ -228,6 +228,7 @@ class _WeatherInfoWidgetState extends State<WeatherInfoWidget> with AutomaticKee
     //请求空气质量信息
     AirResultListEntity airData =
         await WeatherApi<AirResultListEntity>().doAirInfo(widget._cityName);
+    print("请求到的空气质量信息：${airData.toString()}");
     //请求24小时天气信息
     FutureHourlyWeatherResultsEntity hourlyData =
         await WeatherApi<FutureHourlyWeatherResultsEntity>()
@@ -240,32 +241,27 @@ class _WeatherInfoWidgetState extends State<WeatherInfoWidget> with AutomaticKee
     LifeSuggestionResultsEntity suggestionResultsEntity =
         await WeatherApi<LifeSuggestionResultsEntity>()
             .doSuggestionInfo(widget._cityName);
-    if (weatherData != null && weatherData.results != null) {
+    if (weatherData.success) {
       _weatherEntity = weatherData.results[0];
     }
 
-    if (airData != null && airData.results != null) {
+    if (airData.success) {
       _airResultEntity = airData.results[0];
     }
 
-    if (hourlyData != null && hourlyData.results != null) {
+    if (hourlyData.success){
       _futureHourlyWeatherEntity = hourlyData.results[0];
     }
 
-    if (daysWeatherEntity != null && daysWeatherEntity.results != null) {
+    if (daysWeatherEntity.success) {
       _daysWeatherEntity = daysWeatherEntity.results[0];
     }
 
-    if (suggestionResultsEntity != null &&
-        suggestionResultsEntity.results != null &&
-        suggestionResultsEntity.results.isNotEmpty) {
+    if (suggestionResultsEntity.success) {
       _lifeSuggestionEntity = suggestionResultsEntity.results[0].suggestion;
-    } else {
-      print("生活指数为空");
     }
     _updatePageState();
     dismissDialog();
-    return null;
   }
 
    //显示等待的dialog

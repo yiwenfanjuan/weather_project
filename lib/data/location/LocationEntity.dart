@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:weather_project/data/BaseData.dart';
 part 'LocationEntity.g.dart';
 /**
  * 地区数据
@@ -32,7 +33,7 @@ class LocationEntity{
 //地区数据列表
 
 @JsonSerializable()
-class LocationListEntity {
+class LocationListEntity extends BaseData{
   List<LocationEntity> results;
 
   LocationListEntity(this.results);

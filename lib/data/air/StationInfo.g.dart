@@ -42,8 +42,22 @@ StationListEntity _$StationListEntityFromJson(Map<String, dynamic> json) {
   return StationListEntity((json['stations'] as List)
       ?.map((e) =>
           e == null ? null : StationEntity.fromJson(e as Map<String, dynamic>))
-      ?.toList());
+      ?.toList())
+    ..status = json['status'] as String
+    ..status_code = json['status_code'] as int
+    ..message = json['message'] as String
+    ..code = json['code'] as int
+    ..success = json['success'] as bool
+    ..data = json['data'] as Map<String, dynamic>;
 }
 
 Map<String, dynamic> _$StationListEntityToJson(StationListEntity instance) =>
-    <String, dynamic>{'stations': instance.stations};
+    <String, dynamic>{
+      'status': instance.status,
+      'status_code': instance.status_code,
+      'message': instance.message,
+      'code': instance.code,
+      'success': instance.success,
+      'data': instance.data,
+      'stations': instance.stations
+    };

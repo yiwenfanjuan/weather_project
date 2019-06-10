@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:weather_project/data/BaseData.dart';
 import 'package:weather_project/data/location/LocationEntity.dart';
 
 part 'LifeSuggestionInfo.g.dart';
@@ -108,7 +109,7 @@ class LifeSuggesstionLocationEntity{
 }
 
 @JsonSerializable()
-class LifeSuggestionResultsEntity{
+class LifeSuggestionResultsEntity extends BaseData{
   List<LifeSuggesstionLocationEntity> results;
 
   LifeSuggestionResultsEntity(this.results);

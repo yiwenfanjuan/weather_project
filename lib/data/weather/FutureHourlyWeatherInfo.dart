@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:weather_project/data/BaseData.dart';
 /**
  * 未来24小时天气信息
  */
@@ -47,7 +48,7 @@ class FutureHourlyWeatherEntity{
 
 //接口返回的总数据
 @JsonSerializable()
-class FutureHourlyWeatherResultsEntity{
+class FutureHourlyWeatherResultsEntity extends BaseData{
   List<FutureHourlyWeatherEntity> results;
 
   FutureHourlyWeatherResultsEntity(this.results);

@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:weather_project/data/BaseData.dart';
 import 'package:weather_project/data/air/StationInfo.dart';
 import 'package:weather_project/data/location/LocationEntity.dart';
 part 'AirInfo.g.dart';
@@ -38,7 +39,7 @@ class CityAirEntity{
 
 //空气信息详情
 @JsonSerializable()
-class AirDetailsEntity{
+class AirDetailsEntity extends BaseData{
 
   CityAirEntity city;
   List<StationEntity> stations;
