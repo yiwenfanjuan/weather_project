@@ -8,6 +8,7 @@ import 'package:weather_project/data/location/LocationEntity.dart';
 import 'package:weather_project/event/event_database_change.dart';
 import 'package:weather_project/http/WeatherApi.dart';
 import 'package:weather_project/ui/dialog/loading_dialog.dart';
+import 'package:weather_project/utils/color_utils.dart';
 
 //显示提醒用户的操作
 void showError(String errorInfo, BuildContext context) {
@@ -27,7 +28,11 @@ void showError(String errorInfo, BuildContext context) {
 }
 
 //显示等待的dialog
-void showLoading(BuildContext context) async{
+void showLoading(BuildContext context) async {
+  if(context == null){
+    print("context为空，无法显示dialog");
+    return;
+  }
   await Future.delayed(Duration.zero, () {
     showDialog(
         context: context,
@@ -39,7 +44,11 @@ void showLoading(BuildContext context) async{
 }
 
 //隐藏dialog
-void dismissDialog(BuildContext context) async{
+void dismissDialog(BuildContext context) async {
+  if(context == null){
+    print("context为空，无法显示dialog");
+    return;
+  }
   await Future.delayed(Duration.zero, () {
     Navigator.pop(context);
   });
@@ -73,9 +82,16 @@ class SearchCityState extends State<SearchCityWidget> {
     _context = context;
     return Scaffold(
       body: Builder(
-        builder: (context) => Padding(
+        builder: (context) => Container(
               padding: EdgeInsets.only(
                   top: MediaQuery.of(context).padding.top + 10.0),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: ColorUtils.getColorWithTime(),
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
               child: Flex(
                 direction: Axis.vertical,
                 children: <Widget>[
@@ -84,6 +100,7 @@ class SearchCityState extends State<SearchCityWidget> {
                     direction: Axis.horizontal,
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
                     children: <Widget>[
                       //返回按钮
                       GestureDetector(
@@ -91,7 +108,7 @@ class SearchCityState extends State<SearchCityWidget> {
                           padding: EdgeInsets.only(left: 10.0, right: 10.0),
                           child: Icon(
                             Icons.arrow_back_ios,
-                            color: Colors.black,
+                            color: Colors.white,
                             size: 20.0,
                           ),
                         ),
@@ -99,37 +116,44 @@ class SearchCityState extends State<SearchCityWidget> {
                           Navigator.of(context).pop();
                         },
                       ),
+                      //搜索框
                       Expanded(
                         flex: 1,
                         child: Container(
-                          constraints: BoxConstraints.tightFor(height: 30.0),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            child: Center(
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 10.0),
-                                child: TextField(
-                                  controller: _controller,
-                                  maxLines: 1,
-                                  decoration: InputDecoration(
-                                    border: InputBorder.none,
-                                    hintMaxLines: 1,
-                                    hintText: "请输入要搜索的城市名或拼音",
-                                    hintStyle: TextStyle(
-                                      fontSize: 12.0,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  style: TextStyle(
-                                    fontSize: 12.0,
-                                    color: Colors.black87,
-                                  ),
-                                  cursorColor: Colors.grey,
+                          constraints: BoxConstraints.expand(height: 30.0),
+                          alignment: Alignment.centerLeft,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 10.0, right: 10.0),
+                            child: TextField(
+                              controller: _controller,
+                              textAlignVertical: TextAlignVertical.center,
+                              maxLines: 1,
+                              textInputAction: TextInputAction.done,
+                              onEditingComplete: () {
+                                showLoading(context);
+                                requestData(_controller.text, context);
+                              },
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                filled: true,
+                                hasFloatingPlaceholder: false,
+                                isDense: true,
+                                hintText: "请输入要搜索的城市名或拼音",
+                                hintStyle: TextStyle(
+                                  fontSize: 12.0,
+                                  color: Colors.grey,
                                 ),
+                                fillColor: Colors.white,
                               ),
+                              style: TextStyle(
+                                fontSize: 12.0,
+                                color: Colors.black87,
+                              ),
+                              cursorColor: Colors.grey,
                             ),
                           ),
                         ),
@@ -139,7 +163,10 @@ class SearchCityState extends State<SearchCityWidget> {
                         child: Padding(
                           padding: EdgeInsets.only(
                               left: 10.0, right: 10.0, top: 5.0, bottom: 5.0),
-                          child: Text("搜索"),
+                          child: Text(
+                            "搜索",
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                         onTap: () {
                           showLoading(context);
@@ -254,7 +281,7 @@ class _CityItemWidget extends StatelessWidget {
                               _locationEntity.name,
                               style: TextStyle(
                                 fontSize: 16.0,
-                                color: Colors.black,
+                                color: Colors.white,
                               ),
                             ),
                           ),
@@ -264,7 +291,7 @@ class _CityItemWidget extends StatelessWidget {
                             "${_locationEntity.path} · ${_locationEntity.country}",
                             style: TextStyle(
                               fontSize: 12.0,
-                              color: Colors.grey,
+                              color: Colors.white60,
                             ),
                           ),
                         ),
@@ -317,21 +344,17 @@ class _CityItemWidget extends StatelessWidget {
       //遍历查询是否是重复数据
       for (var item in result) {
         if (item["name"] == _locationEntity.name &&
-            item["path"] == _locationEntity.country) {
-              print("查询到数据库中已经有当前数据了");
+            item["path"] == _locationEntity.path) {
+          print("查询到数据库中已经有当前数据了");
           showError("当前城市已经存在数据库中", context);
           dismissDialog(context);
           return;
         }
       }
       //将数据加入到数据库中
-      int columnId = result != null && result.isNotEmpty
-          ? result[result.length - 1]["columnId"] + 1
-          : 0;
       Map<String, dynamic> map = HashMap();
-      map["columnId"] = columnId;
       map["name"] = _locationEntity.name;
-      map["path"] = _locationEntity.country;
+      map["path"] = _locationEntity.path;
       var data = await DBUtils().insertData(DBUtils.TABLE_LOCATION, map);
       if (data != null && data.isNotEmpty) {
         showError("插入数据库成功 ", context);

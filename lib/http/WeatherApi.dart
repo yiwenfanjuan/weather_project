@@ -27,7 +27,7 @@ class WeatherApi<D> {
       String path, Map<String, dynamic> params,
       {String containKey = Constant.DATA_KEY}) async {
     Dio dio = HttpClient.getDio();
-    params["key"] = "SgWkQMzCFmmdINuRj";
+    params["key"] = "SjFcDpOpiVPJ4eEDw";
     try {
       Response response = await dio.get(path, queryParameters: params);
       print(

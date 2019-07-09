@@ -67,13 +67,13 @@ class _LifeSuggestionWidget extends StatelessWidget{
           child: Padding(
             padding: EdgeInsets.only(top: 10.0,left: 15.0),
             child:Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               //生活指数类型
               Text(WeatherUtils.getSuggestionText(_type),
                 style: TextStyle(
                     fontSize: 12.0,
-                    color: Colors.black,
+                    color: Colors.white,
                 ),
               ),
               //简要信息
@@ -82,7 +82,7 @@ class _LifeSuggestionWidget extends StatelessWidget{
                 child: Text(_suggestionEntity.brief,
                   style: TextStyle(
                     fontSize: 14.0,
-                    color: Colors.blueAccent,
+                    color: Colors.white60,
                   ),
                 ),
               ),
@@ -92,7 +92,7 @@ class _LifeSuggestionWidget extends StatelessWidget{
                 child: Text(_suggestionEntity.details,
                   style: TextStyle(
                     fontSize: 10.0,
-                    color: Colors.grey,
+                    color: Colors.white54,
                   ),
                   maxLines: 2,
                 ),

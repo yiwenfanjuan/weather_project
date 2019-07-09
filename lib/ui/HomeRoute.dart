@@ -8,8 +8,10 @@ import 'package:weather_project/event/event_database_change.dart';
 import 'package:weather_project/ui/WeatherInfoTab.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:amap_location/amap_location.dart';
+import 'package:weather_project/ui/city_manager_route.dart';
 import 'package:weather_project/ui/dialog/loading_dialog.dart';
-import 'insert_city.dart';
+import 'package:weather_project/ui/search_city.dart';
+import 'package:weather_project/utils/color_utils.dart';
 
 class HomeRoute extends StatefulWidget {
   @override
@@ -33,13 +35,28 @@ class _HomeRouteState extends State<HomeRoute> {
   //监听数据库数据改变的时间
   //这里不一定非要用这种方式实现，也可以根据下个页面返回的数据去做相应的操作
   void updateDatabaseChange() {
+    //添加数据库事件监听
     databaseChangeEvent.addCallback(Constant.DATABASE_INSERT_LOCATION, (arg) {
       //数据库中的数据成功插入之后会发送通知，在这里在最后一个页面之前插入数据
-      _weatherWidgetList.insert(_weatherWidgetList.length - 1,
-          WeatherInfoWidget((arg as LocationEntity).name));
+      _weatherWidgetList.add(WeatherInfoWidget((arg as LocationEntity).name));
       _locationList.add(arg as LocationEntity);
-      if (_weatherWidgetList.length > 5) {
-        _weatherWidgetList.removeLast();
+      updatePageState();
+    });
+
+    databaseChangeEvent.addCallback(Constant.DATABASE_DELETE_LOCATION, (arg) {
+      LocationEntity entity = (arg as LocationEntity);
+      int removePostion = -1;
+      for (int i = 0; i < _locationList.length; i++) {
+        if (_locationList[i].name == entity.name &&
+            _locationList[i].path == entity.path) {
+          removePostion = i;
+          break;
+        }
+      }
+      print("要删除的位置：$removePostion");
+      if (removePostion > -1) {
+        _weatherWidgetList.removeAt(removePostion);
+        _locationList.removeAt(removePostion);
       }
       updatePageState();
     });
@@ -64,70 +81,89 @@ class _HomeRouteState extends State<HomeRoute> {
 
   @override
   Widget build(BuildContext context) {
-    print("绘制页面：${_weatherWidgetList.length}");
-    this._context = context;
     return Scaffold(
-      body: Stack(
-        children: <Widget>[
-          PageView.custom(
-            controller: _pageController,
-            childrenDelegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return _weatherWidgetList[index];
-              },
-              childCount: _weatherWidgetList.length,
-            ),
-          ),
-        ],
+      backgroundColor: ColorUtils.getCityBackgroundWithTime(),
+      body: Builder(
+        builder: (context) {
+          this._context = context;
+          return Stack(
+            children: <Widget>[
+              PageView.custom(
+                controller: _pageController,
+                childrenDelegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    return _weatherWidgetList[index];
+                  },
+                  childCount: _weatherWidgetList.length,
+                ),
+              ),
+              //右上角显示设置按钮
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 10,
+                right: 10.0,
+                child: GestureDetector(
+                  child: Icon(
+                    Icons.more_vert,
+                    size: 30.0,
+                    color: Colors.white,
+                  ),
+                  onTap: () {
+                    //点击跳转到城市管理页面
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => CityManagerRoute()));
+                  },
+                ),
+              )
+            ],
+          );
+        },
       ),
     );
   }
 
   @override
-  void dispose(){
+  void dispose() {
     AMapLocationClient.shutdown();
     super.dispose();
   }
 
   //查看是否拥有定位权限
   checkLocationPermission() async {
-    bool result = await checkPermissionResult([PermissionGroup.phone,PermissionGroup.storage,PermissionGroup.location]);
+    bool result = await checkPermissionResult([
+      PermissionGroup.phone,
+      PermissionGroup.storage,
+      PermissionGroup.location
+    ]);
     if (!result) {
       //用户没有同意授权
       print("用户没有同意授予定位权限");
-      //查看是否可以再次弹框询问用户操作
-      bool doNotRemind = await checkDoNotRemind([PermissionGroup.phone,PermissionGroup.storage,PermissionGroup.location]);
-      if (doNotRemind) {
-        print("shouldShowRequestPermissionRationale");
-        //用户选择了不再询问,显示一个添加地址的页面
-        _weatherWidgetList.add(InsertCityWidget());
+      //弹框提醒用户授予权限
+      var result = await showPermissionRemindDialog();
+      if (result == "cancel") {
+        //用户拒绝授予权限，提供一个插入数据的页面
+        showError("您拒绝了授予权限，请手动添加城市信息", _context);
+        updatePageState();
       } else {
-        //弹框提醒用户授予权限
-        var result = await showPermissionRemindDialog();
-        if (result == "cancel") {
-          //用户拒绝授予权限，提供一个插入数据的页面
-          _weatherWidgetList.add(InsertCityWidget());
-          updatePageState();
-        } else {
-          //用户同意授权，开始申请权限
-          Map<PermissionGroup, PermissionStatus> permissionResult =
-              await requestPermission();
-          //遍历查询是否所有权限都已经获取了
-          Iterable<MapEntry<PermissionGroup, PermissionStatus>> iterable =
-              permissionResult.entries;
-          Iterator<MapEntry<PermissionGroup, PermissionStatus>> iterator =
-              iterable.iterator;
-          while (iterator.moveNext()) {
-            if (iterator.current.value != PermissionStatus.granted) {
-              //有一个权限没有获取到
-              _weatherWidgetList.add(InsertCityWidget());
-              updatePageState();
-              return;
-            }
+        //用户同意授权，开始申请权限
+        Map<PermissionGroup, PermissionStatus> permissionResult =
+            await requestPermission();
+        //遍历查询是否所有权限都已经获取了
+        Iterable<MapEntry<PermissionGroup, PermissionStatus>> iterable =
+            permissionResult.entries;
+        Iterator<MapEntry<PermissionGroup, PermissionStatus>> iterator =
+            iterable.iterator;
+        while (iterator.moveNext()) {
+          if (iterator.current.value != PermissionStatus.granted) {
+            //有一个权限没有获取到
+            showError("您拒绝了授予权限，请手动添加城市信息", _context);
+            updatePageState();
+            break;
           }
-          //所有权限都已经获取到了
-          startLocation();
         }
+        //暂时不对showRequestPermission进行判断，因为这样会导致让用户循环授予权限
+        startLocation();
       }
     } else {
       //已经有当前权限了
@@ -137,8 +173,11 @@ class _HomeRouteState extends State<HomeRoute> {
 
   //进行权限申请
   Future<Map<PermissionGroup, PermissionStatus>> requestPermission() async {
-    return await PermissionHandler().requestPermissions(
-        [PermissionGroup.location, PermissionGroup.storage,PermissionGroup.phone]);
+    return await PermissionHandler().requestPermissions([
+      PermissionGroup.location,
+      PermissionGroup.storage,
+      PermissionGroup.phone
+    ]);
   }
 
   //调用高德地图进行位置信息获取
@@ -150,35 +189,38 @@ class _HomeRouteState extends State<HomeRoute> {
     AMapLocation location = await AMapLocationClient.getLocation(true);
     print("获取到的定位信息：${location.description}");
     //查看获取到的定位信息是否合法
-    
-    if(location != null && location.city != null && location.city.isNotEmpty){
-     String city = location.city;
-     if(location.city.contains("市",location.city.length - 1)){
-        city = location.city.replaceFirst("市", "",location.city.length - 1);
+    if (location != null && location.city != null && location.city.isNotEmpty) {
+      String city = location.city;
+      if (location.city.contains("市", location.city.length - 1)) {
+        city = location.city.replaceFirst("市", "", location.city.length - 1);
       }
       //将当前城市加入到数据库中
-      //TODO 这里有漏洞，因为没有在数据库中插入Path信息，会出问题，同一个城市可能会被多次加入
-      Map<String,dynamic> map = HashMap();
+      //TODO 这里有漏洞，因为没有在数据库中插入Path信息，会出问题，同一个城市可能会被多次加入,而且因为高德地图获取到的path信息和天气信息获取到的path信息有差异，所以这里
+      //最好的处理方式是将获取到的经纬度信息传递到下个页面，然后通过经纬度去请求天气信息，最后再将请求到的path信息添加到数据库中，但是判断比较麻烦，作为第三期的优化内容
+      Map<String, dynamic> map = HashMap();
       map["name"] = city;
+      StringBuffer buffer = StringBuffer(city);
+      buffer.write(" · ${location.province}");
+      buffer.write(" · ${location.country}");
+      map["path"] = buffer.toString();
       DBUtils().insertData(DBUtils.TABLE_LOCATION, map);
       _weatherWidgetList.add(WeatherInfoWidget(city));
-      _weatherWidgetList.add(InsertCityWidget());
-    }else{
-      //获取位置信息失败，
-      _weatherWidgetList.add(InsertCityWidget());
     }
+
     updatePageState();
     dismissDialog();
   }
 
   //查看权限结果
-  Future<bool> checkPermissionResult(List<PermissionGroup> permissionList)async{
-    if(permissionList == null || permissionList.isEmpty){
+  Future<bool> checkPermissionResult(
+      List<PermissionGroup> permissionList) async {
+    if (permissionList == null || permissionList.isEmpty) {
       return true;
-    }else{
+    } else {
       for (var item in permissionList) {
-         PermissionStatus status = await PermissionHandler().checkPermissionStatus(item);
-        if(status != PermissionStatus.granted){
+        PermissionStatus status =
+            await PermissionHandler().checkPermissionStatus(item);
+        if (status != PermissionStatus.granted) {
           return false;
         }
       }
@@ -188,14 +230,14 @@ class _HomeRouteState extends State<HomeRoute> {
 
   //查看用户是否选择了不再提醒
   Future<bool> checkDoNotRemind(List<PermissionGroup> permissionList) async {
-    if(permissionList == null || permissionList.isEmpty){
+    if (permissionList == null || permissionList.isEmpty) {
       return false;
     }
 
     for (var item in permissionList) {
-      bool result = await await PermissionHandler()
-              .shouldShowRequestPermissionRationale(item);
-      if(result){
+      bool result =
+          await PermissionHandler().shouldShowRequestPermissionRationale(item);
+      if (result) {
         return true;
       }
     }
@@ -215,7 +257,6 @@ class _HomeRouteState extends State<HomeRoute> {
   //获取本地数据库中保存的地址列表信息
   checkLocalLocation(bool requestPermission) async {
     showLoading();
-    print("地区列表：${_locationList == null ? null : _locationList.length}");
     await getLocalLocationList();
     //查看本地是否存在数据
     if (_locationList != null && _locationList.isNotEmpty) {
@@ -223,10 +264,6 @@ class _HomeRouteState extends State<HomeRoute> {
       _locationList.forEach((element) {
         _weatherWidgetList.add(WeatherInfoWidget(element.name));
       });
-      //查看本地数据库中的数据如果小于可以设置的最大值，就将加入城市的页面添加进去
-      if (_weatherWidgetList.length < Constant.MAX_CITY_VALUE) {
-        _weatherWidgetList.add(InsertCityWidget());
-      }
       //刷新页面
       updatePageState();
     } else if (requestPermission) {

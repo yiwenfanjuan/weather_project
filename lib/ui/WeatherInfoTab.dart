@@ -1,5 +1,4 @@
-import 'dart:ui' as prefix0;
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:weather_project/data/air/AirInfo.dart';
 import 'package:weather_project/data/air/AirResultInfo.dart';
@@ -13,7 +12,7 @@ import 'package:weather_project/ui/WeatherFutureDailyWidget.dart';
 import 'package:weather_project/ui/WeatherFutureHourlyWidget.dart';
 import 'package:weather_project/ui/dialog/loading_dialog.dart';
 import 'package:weather_project/ui/search_city.dart';
-import 'package:weather_project/utils/DateUtils.dart';
+import 'package:weather_project/utils/color_utils.dart';
 
 /**
  * 天气信息显示的TabView
@@ -21,6 +20,7 @@ import 'package:weather_project/utils/DateUtils.dart';
 class WeatherInfoWidget extends StatefulWidget {
   //需要请求信息的城市名称
   final String _cityName;
+
 
   WeatherInfoWidget(@required this._cityName);
 
@@ -30,7 +30,8 @@ class WeatherInfoWidget extends StatefulWidget {
   }
 }
 
-class _WeatherInfoWidgetState extends State<WeatherInfoWidget> with AutomaticKeepAliveClientMixin{
+class _WeatherInfoWidgetState extends State<WeatherInfoWidget>
+    with AutomaticKeepAliveClientMixin {
   //当前城市的天气信息
   NowWeatherEntity _weatherEntity;
   //当前城市的空气信息
@@ -50,170 +51,128 @@ class _WeatherInfoWidgetState extends State<WeatherInfoWidget> with AutomaticKee
   }
 
   //更新页面状态
-  void _updatePageState(){
-    if(mounted){
-      setState(() {
-        
-      });
+  void _updatePageState() {
+    if (mounted) {
+      setState(() {});
     }
   }
 
   @override
   Widget build(BuildContext context) {
     this._context = context;
-    //使用可滚动控件显示当天的天气信息
-    return RefreshIndicator(
-      onRefresh: doData,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            //显示天气信息
-            ConstrainedBox(
-              constraints: BoxConstraints.expand(height: 300.0),
-              child: DecoratedBox(
-                child: (_weatherEntity == null || _airResultEntity == null)
-                    ? null
-                    : _WeatherDetailsWidget(_weatherEntity,
-                        airEntity: _airResultEntity.air.city),
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                  //从右上角开始
-                  begin: Alignment.topRight,
-                  //到左下角结束
-                  end: Alignment.bottomLeft,
-                  colors: <Color>[
-                    _weatherEntity == null
-                        ? NowWeatherDetailsEntity.SUNNY_START_COLOR
-                        : _weatherEntity.now.startColor,
-                    _weatherEntity == null
-                        ? NowWeatherDetailsEntity.SUNNY_END_COLOR
-                        : _weatherEntity.now.endColor,
-                  ],
-                )),
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.all(15.0),
-              child: Text(
-                "未来24小时天气状况",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 14.0,
+    return Container(
+      constraints: BoxConstraints.expand(),
+      decoration: BoxDecoration(
+          gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: ColorUtils.getColorWithTime(),
+      )),
+      child: RefreshIndicator(
+        onRefresh: doData,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Container(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                //显示天气信息
+                Container(
+                  child: (_weatherEntity == null || _airResultEntity == null)
+                      ? null
+                      : _WeatherDetailsWidget(_weatherEntity,
+                          airEntity: _airResultEntity.air.city),
+                  constraints: BoxConstraints.expand(
+                    height: (_weatherEntity == null ? 0 : 300.0),
+                  ),
                 ),
-                textAlign: TextAlign.start,
-              ),
-            ),
 
-            //分割线
-            ConstrainedBox(
-              constraints: BoxConstraints.expand(height: 1.0),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(3.0),
-                  color: Colors.black12,
-                  shape: BoxShape.rectangle,
+                //显示从当前时间开始的未来24小时的天气预报
+                Padding(
+                  padding: EdgeInsets.only(top: 30.0),
+                  child: Container(
+                    constraints: BoxConstraints.expand(height: 100.0),
+                    child: _futureHourlyWeatherEntity == null
+                        ? null
+                        : Container(
+                            child: WeatherFutureHourlyWidget(
+                                _futureHourlyWeatherEntity),
+                          ),
+                  ),
                 ),
-              ),
-            ),
-            //显示从当前时间开始的未来24小时的天气预报
-            ConstrainedBox(
-              constraints: BoxConstraints.expand(height: 120.0),
-              
-              child: _futureHourlyWeatherEntity == null
-                  ? null
-                  : DecoratedBox(
-                    decoration: BoxDecoration(color: Colors.grey[100]),
-                    child: WeatherFutureHourlyWidget(_futureHourlyWeatherEntity),),
-            ),
 
-            //分割线
-            ConstrainedBox(
-              constraints: BoxConstraints.expand(height: 1.0),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(3.0),
-                  color: Colors.grey[200],
-                  shape: BoxShape.rectangle,
+                //5天天气数据列表
+                Padding(
+                  padding: EdgeInsets.only(top: 30.0),
+                  child: Container(
+                    padding: EdgeInsets.only(left: 16.0, right: 16.0),
+                    constraints: BoxConstraints.tightFor(),
+                    child: _daysWeatherEntity == null
+                        ? null
+                        : WeatherFutureDailyWidget(_daysWeatherEntity),
+                  ),
                 ),
-              ),
-            ),
 
-            //5天天气状况预测
-            Padding(
-              padding: EdgeInsets.all(15.0),
-              child: Text(
-                "5天天气状况预测",
-                style: TextStyle(color: Colors.black, fontSize: 14),
-              ),
-            ),
+                //分割线
+                Padding(
+                  padding: EdgeInsets.only(top: 30.0),
+                  child: Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        //line
+                        Container(
+                          constraints: BoxConstraints.tightFor(
+                              width: 100.0, height: 1.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(2.0),
+                            gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: <Color>[Colors.white12, Colors.white]),
+                          ),
+                        ),
 
-            //分割线
-            ConstrainedBox(
-              constraints: BoxConstraints.expand(height: 1.0),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(3.0),
-                  color: Colors.black12,
-                  shape: BoxShape.rectangle,
+                        //文字
+                        Padding(
+                          padding: EdgeInsets.only(left: 10.0, right: 10.0),
+                          child: Text(
+                            "生活指数",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          constraints: BoxConstraints.tightFor(
+                              width: 100.0, height: 1.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(2.0),
+                            gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: <Color>[Colors.white, Colors.white12]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            //5天天气数据列表
-            Container(
-              constraints: BoxConstraints.expand(height: 150.0),
-              color: Colors.grey[10],
-              child: _daysWeatherEntity == null
-                  ? null
-                  : WeatherFutureDailyWidget(_daysWeatherEntity),
-            ),
-
-            //分割线
-            ConstrainedBox(
-              constraints: BoxConstraints.expand(height: 1.0),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(3.0),
-                  color: Colors.black12,
-                  shape: BoxShape.rectangle,
+                //生活指数信息
+                Container(
+                  padding: EdgeInsets.only(top: 10.0),
+                  constraints: BoxConstraints.tightFor(),
+                  child: _lifeSuggestionEntity == null
+                      ? null
+                      : LifeSuggestionListWidget(_lifeSuggestionEntity),
                 ),
-              ),
+              ],
             ),
-
-              //5天天气状况预测
-            Padding(
-              padding: EdgeInsets.all(15.0),
-              child: Text(
-                "生活指数",
-                style: TextStyle(color: Colors.black, fontSize: 14),
-              ),
-            ),
-
-            //分割线
-            ConstrainedBox(
-              constraints: BoxConstraints.expand(height: 1.0),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(3.0),
-                  color: Colors.black12,
-                  shape: BoxShape.rectangle,
-                ),
-              ),
-            ),
-
-            //生活指数信息
-            Container(
-              constraints: BoxConstraints.tightFor(),
-              child: _lifeSuggestionEntity == null
-                  ? null
-                  : LifeSuggestionListWidget(_lifeSuggestionEntity),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -221,7 +180,7 @@ class _WeatherInfoWidgetState extends State<WeatherInfoWidget> with AutomaticKee
 
   //请求数据
   Future<Null> doData() async {
-    showLoading();
+    showLoading(context);
     //请求天气信息
     NowWeatherListEntity weatherData =
         await WeatherApi<NowWeatherEntity>().doNowWeather(widget._cityName);
@@ -249,7 +208,7 @@ class _WeatherInfoWidgetState extends State<WeatherInfoWidget> with AutomaticKee
       _airResultEntity = airData.results[0];
     }
 
-    if (hourlyData.success){
+    if (hourlyData.success) {
       _futureHourlyWeatherEntity = hourlyData.results[0];
     }
 
@@ -261,14 +220,15 @@ class _WeatherInfoWidgetState extends State<WeatherInfoWidget> with AutomaticKee
       _lifeSuggestionEntity = suggestionResultsEntity.results[0].suggestion;
     }
     _updatePageState();
-    dismissDialog();
+    dismissDialog(context);
   }
 
-   //显示等待的dialog
-  void showLoading() {
+  //显示等待的dialog
+  /*
+  void showLoading(BuildContext context) {
     Future.delayed(Duration.zero, () {
       showDialog(
-          context: _context,
+          context: context,
           barrierDismissible: false,
           builder: (context) {
             return LoadingDialogWidget();
@@ -277,12 +237,12 @@ class _WeatherInfoWidgetState extends State<WeatherInfoWidget> with AutomaticKee
   }
 
   //隐藏dialog
-  void dismissDialog() {
+  void dismissDialog(BuildContext context) {
     Future.delayed(Duration.zero, () {
       Navigator.pop(context);
     });
   }
-
+  */
 
   @override
   bool get wantKeepAlive => true;
@@ -295,6 +255,12 @@ class _WeatherDetailsWidget extends StatelessWidget {
   //空气质量数据
   CityAirEntity _airEntity;
 
+  //空气质量数据的TextStyle
+  final TextStyle _airTextStyle = TextStyle(
+    fontSize: 14.0,
+    color: Colors.white,
+  );
+
   _WeatherDetailsWidget(this._weatherEntity, {CityAirEntity airEntity}) {
     this._airEntity = airEntity;
   }
@@ -302,211 +268,225 @@ class _WeatherDetailsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: BoxConstraints.expand(),
-      child: Stack(
-        fit: StackFit.expand,
-        alignment: Alignment.centerLeft,
-        children: <Widget>[
-          //顶部显示当前的城市信息
-          Positioned(
-            left: 15.0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(
-                  Icons.location_city,
-                  color: Colors.white,
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 10.0),
-                  child: Text(
-                    "${_weatherEntity.location.name}(${_weatherEntity.location.country})",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16.0),
-                  ),
-                )
-              ],
-            ),
-          ),
-          //底部显示当前的天气信息
-          Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                //风力信息
-                Chip(
-                  avatar: CircleAvatar(
-                    backgroundColor: Colors.white70,
-                    child: Padding(
-                      padding: EdgeInsets.all(2.0),
-                      child: Image.asset(
-                        "icons/icon_windy.png",
-                        color: Colors.grey,
-                        width: 40.0,
-                        height: 40.0,
-                      ),
-                    ),
-                  ),
-                  label: RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        fontSize: 16.0,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: "风力：",
-                        ),
-                        TextSpan(
-                            text: "${_weatherEntity.now.wind_direction} 风"),
-                        TextSpan(text: " · ${_weatherEntity.now.wind_scale} 级"),
-                      ],
-                    ),
-                  ),
-                ),
-                //温度和湿度信息
-                Padding(
-                  padding: EdgeInsets.only(top: 3.0, left: 5.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      //温度信息
-                      RichText(
-                        text: TextSpan(children: <TextSpan>[
-                          TextSpan(
+        constraints: BoxConstraints.expand(),
+        child: Padding(
+          padding: EdgeInsets.all(15.0),
+          child: Flex(
+            direction: Axis.horizontal,
+            children: <Widget>[
+              //左边显示体感温度，湿度，城市，风力信息
+              Expanded(
+                flex: 1,
+                child: Stack(
+                  alignment: AlignmentDirectional.centerStart,
+                  fit: StackFit.expand,
+                  children: <Widget>[
+                    Positioned(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          //体感温度
+                          Text(
+                            "${_weatherEntity.now.feels_like}°",
                             style: TextStyle(
+                              fontSize: 40.0,
                               color: Colors.white,
-                              fontSize: 24.0,
+                              fontWeight: FontWeight.w900,
+                              shadows: [
+                                Shadow(color: Colors.grey, blurRadius: 2.0),
+                              ],
                             ),
-                            text: "${_weatherEntity.now.temperature}℃",
+                            textAlign: TextAlign.center,
                           ),
-                          TextSpan(
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 18.0),
-                            text: "/${_weatherEntity.now.feels_like}℃",
-                          ),
-                        ]),
-                      ),
-
-                      //湿度信息
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0),
-                        child: Row(
-                          children: <Widget>[
-                            //湿度图片
-                            Image(
-                              image: AssetImage("icons/icon_humidity.png"),
-                            ),
-                            //湿度信息
-                            Padding(
-                              padding: EdgeInsets.only(left: 5.0),
-                              child: Text(
-                                "${_weatherEntity.now.humidity}%",
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 16.0),
-                              ),
-                            )
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          //右上角显示天气图片
-          Positioned(
-            right: 15.0,
-            top: 15.0,
-            child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Image(
-                    image: AssetImage(_weatherEntity.now.imagePath),
-                    width: 100.0,
-                    height: 100.0,
-                    fit: BoxFit.contain,
-                  ),
-                  //显示当前的天气状况
-                  Padding(
-                    padding: EdgeInsets.only(top: 5.0),
-                    child: Text(
-                      _weatherEntity.now.text,
-                      style: TextStyle(fontSize: 20.0, color: Colors.white),
-                    ),
-                  ),
-                  //显示最后更新时间
-                  Padding(
-                    padding: EdgeInsets.only(top: 3.0),
-                    child: Text(
-                      "最后更新于:${DateUtils.updateTime(_weatherEntity.last_update)}",
-                      style: TextStyle(fontSize: 12.0, color: Colors.white70),
-                    ),
-                  ),
-                ]),
-          ),
-          //右下角显示空气质量信息
-          Positioned(
-            right: 15.0,
-            bottom: 15.0,
-            child: _airEntity == null
-                ? null
-                : GestureDetector(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              "空气质量 : ${_airEntity.quality}",
-                              style: TextStyle(
-                                  fontSize: 16.0, color: Colors.white),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.only(top: 10.0),
-                              child: Text(
-                                "PM2.5 : ${_airEntity.pm25}",
-                                style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 16.0,
+                          //湿度
+                          Padding(
+                            padding: EdgeInsets.only(top: 5.0),
+                            child: Row(
+                              children: <Widget>[
+                                Container(
+                                  constraints: BoxConstraints.tightFor(
+                                      width: 20.0, height: 20.0),
+                                  child: CircleAvatar(
+                                    child: Image(
+                                      image:
+                                          AssetImage("icons/icon_humidity.png"),
+                                    ),
+                                    backgroundColor: Colors.transparent,
+                                  ),
                                 ),
-                              ),
-                            )
-                          ],
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(left: 15.0),
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints.loose(Size(25.0, 25.0)),
-                            child: CircleAvatar(
-                              backgroundColor: Colors.white70,
-                              child: Icon(
-                                Icons.arrow_right,
-                                color: Colors.grey,
-                                size: 15.0,
-                              ),
+                                //湿度
+                                Padding(
+                                  padding: EdgeInsets.only(left: 5.0),
+                                  child: Text(
+                                    "${_weatherEntity.now.humidity}%",
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 16.0),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
+                          Padding(
+                            padding: EdgeInsets.only(top: 8.0),
+                            child: Row(
+                              children: [
+                                Container(
+                                  constraints: BoxConstraints.tightFor(
+                                      width: 18.0, height: 18.0),
+                                  child: Image(
+                                    image: AssetImage("icons/icon_windy.png"),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(left: 5.0),
+                                  child: Text(
+                                    "${_weatherEntity.now.wind_direction}风·${_weatherEntity.now.wind_scale}级",
+                                    style: TextStyle(
+                                        fontSize: 16.0, color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    onTap: () {
-                      print("点击空气质量部分");
-                    },
-                  ),
-          )
-        ],
-      ),
-    );
+
+                    //底部显示城市信息
+                    Positioned(
+                      bottom: 5.0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.rectangle,
+                          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                          color: ColorUtils.getCityBackgroundWithTime(),
+                        ),
+                        constraints: BoxConstraints.tightFor(),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 3.0, horizontal: 8.0),
+                          child: Row(
+                            children: <Widget>[
+                              Icon(
+                                Icons.location_city,
+                                size: 20.0,
+                                color: Colors.white,
+                              ),
+                              Padding(
+                                padding: EdgeInsets.only(left: 5.0),
+                                child: Text(
+                                  "${_weatherEntity.location.name}(${_weatherEntity.location.country})",
+                                  style: TextStyle(
+                                      fontSize: 16.0, color: Colors.white),
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              //右边显示天气图片和空气质量信息
+              Expanded(
+                flex: 1,
+                child: Flex(
+                  direction: Axis.vertical,
+                  children: <Widget>[
+                    //上部分显示天气图片
+                    Expanded(
+                      flex: 1,
+                      child: Container(
+                        alignment: Alignment.centerRight,
+                        padding: EdgeInsets.only(
+                            top: MediaQuery.of(context).padding.top + 10),
+                        child: Image(
+                          image: AssetImage(_weatherEntity.now.imagePath),
+                          fit: BoxFit.fitWidth,
+                          width: 120.0,
+                          height: 120.0,
+                        ),
+                      ),
+                    ),
+                    //下部分显示空气质量信息
+                    Container(
+                      padding: EdgeInsets.only(right: 16.0, top: 20.0),
+                      child: _airEntity == null
+                          ? null
+                          :
+                          //如果数据不为空就设置信息,根布局是一个事件监控的widget
+                          GestureDetector(
+                              child: Flex(
+                                direction: Axis.horizontal,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.max,
+                                //左边显示空气质量指数,右边显示一个查看更多按钮
+                                children: <Widget>[
+                                  //空气质量指数
+                                  Expanded(
+                                    flex: 1,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(top: 10.0),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.max,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: <Widget>[
+                                          //天气详情
+                                          Text(
+                                            _weatherEntity.now.text,
+                                            style: _airTextStyle,
+                                          ),
+                                          //空气质量指数
+                                          Padding(
+                                            padding: EdgeInsets.only(top: 10.0),
+                                            child: Text(
+                                              "空气质量: ${_airEntity.quality}",
+                                              style: _airTextStyle,
+                                            ),
+                                          ),
+                                          //pm2.5信息
+                                          Padding(
+                                            padding: EdgeInsets.only(top: 10.0),
+                                            child: Text(
+                                              "PM2.5: ${_airEntity.pm25}",
+                                              style: _airTextStyle,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  //查看更多按钮
+
+                                  Container(
+                                    constraints: BoxConstraints.tightFor(),
+                                    alignment: Alignment.center,
+                                    padding: EdgeInsets.only(left: 10.0),
+                                    child: Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.white,
+                                      size: 20.0,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              onTap: () {
+                                //点击跳转到空气详情页面
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ));
   }
 }

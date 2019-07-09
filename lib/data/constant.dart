@@ -42,4 +42,6 @@ class Constant {
 
   //数据库操作事件常量
   static const String DATABASE_INSERT_LOCATION ="databaseChange";
+  //数据库删除城市常量
+  static const String DATABASE_DELETE_LOCATION = "deleteCityEvent";
 }

@@ -29,8 +29,7 @@ class DBUtils {
     var result = await dbHelper._db.transaction((transcation) async{
       return transcation.query(tableName,where: where,whereArgs: arguments);
     });
-    
-    print("数据库中的数据:${result.runtimeType}");
+
     return result;
   }
 
@@ -41,6 +40,17 @@ class DBUtils {
     }
     Batch batch = dbHelper._db.batch();
     batch.insert(table, data);
+    var result = batch.commit();
+    return result;
+  }
+
+  //从数据库删除一条数据
+  Future<List<dynamic>> deleteCity(String table,{String where,List<dynamic> whereArgs}) async {
+    if(dbHelper._db == null){
+      await dbHelper._initDatabase();
+    }
+    Batch batch = dbHelper._db.batch();
+    batch.delete(table,where: where, whereArgs: whereArgs);
     var result = batch.commit();
     return result;
   }

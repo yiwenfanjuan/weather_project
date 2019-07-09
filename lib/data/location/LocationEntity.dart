@@ -27,7 +27,15 @@ class LocationEntity{
   LocationEntity.fromDatabase(Map<String,dynamic> databaseMap)
     : this.columnId = databaseMap["columnId"],
       this.name = databaseMap["name"],
-      this.country = databaseMap["path"];
+      this.path = databaseMap["path"];
+
+  @override
+  String toString() {
+    StringBuffer buffer = StringBuffer("城市信息：");
+    buffer.writeln(name);
+    buffer.writeln(path);
+    return buffer.toString();
+  }
 }
 
 //地区数据列表

@@ -10,7 +10,7 @@ part 'AirInfo.g.dart';
 //城市空气信息
 @JsonSerializable()
 class CityAirEntity{
-  String aqi;//控制质量指数
+  String aqi;//空气质量指数
   String pm25;//PM2.5一小时平均值
   String pm10;//PM10颗粒物1小时平均值
   String so2;//二氧化硫一小时平均值
